@@ -17,7 +17,7 @@ struct atributos
 {
 	string label;
 	string traducao;
-	
+	string tipo;
 };
 string printDeclaracoes();
 int yylex(void);
@@ -33,7 +33,8 @@ std::string gen_label()
 %}
 
 %token TK_NUM
-%token TK_MAIN TK_ID TK_TIPO_INT
+%token TK_REAL TK_TIPO
+%token TK_MAIN TK_ID 
 %token TK_FIM TK_ERROR
 %token TK_OP
 
@@ -52,8 +53,11 @@ std::string gen_label()
 
 
 
-S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
+S 			: TK_TIPO TK_MAIN '(' ')' BLOCO
 			{
+				if($1.tipo != "int")
+					cout << $1.tipo;
+					yyerror("main deve ser do tipo int");
 				cout << "\n/*Compilador FOCA*/\n\n";
 				cout << "#include <iostream>\n#iCompilador>\n#include<stdio.h>\n\n";
 				cout << "int main(void)\n{\n";
@@ -98,10 +102,14 @@ E 			: E TK_OP E //operaçẽs básicas
 			
 			| TK_ID '=' E //atribuição
 			{
+				if(declarationList.str().find($1.label) == std::string::npos)
+					yyerror("\n" + $1.label +" não foi declarada");
+				if($1.tipo != $3.tipo)
+					yyerror("tipos diferentes");
 				$$.label = $1.label; // Label da expressão = Label/nome da variavel
 				$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n"; //mantem tradução da expressão + Nome da variavel = Variavel temporaria da expressão 
-				
-				
+				$$.tipo = $1.tipo;
+				 				
 			}
 
 			| TK_NUM
@@ -109,35 +117,47 @@ E 			: E TK_OP E //operaçẽs básicas
 				std::string label = gen_label();
 				$$.label = label; //temp n
 				$$.traducao = "\t" + label + " = " + $1.traducao + ";\n"; //tem n = valor do numero
+				$$.tipo = $1.tipo;
 			}
-			
-			| TK_ID
-			{			
-				//if(declarationList.str().find($1.label)!= std::string::npos)
+
+			| TK_REAL
+			{
 				std::string label = gen_label();
 				$$.label = label; //temp n
-				$$.traducao = "\t" + label + " = " + $1.label + ";\n"; //temp n = "nome da variavel"
+				$$.traducao = "\t" + label + " = " + $1.traducao + ";\n"; //tem n = valor do numero
+				$$.tipo = $1.tipo;
+			}
+
+			| TK_ID
+			{			
 				
-					
-					
+					std::string label = gen_label();
+					$$.label = label; //temp n
+					$$.traducao = "\t" + label + " = " + $1.label + ";\n"; //temp n = "nome da variavel"
+							
 			}
 			
-DECLARACAO	: TK_TIPO_INT TK_ID
+DECLARACAO	: DECLARACAO '=' E
+			{
+				//std::string label = gen_label();
+				if($1.tipo != $3.tipo)
+					yyerror("tipos incompativeis");
+				$$.label = $1.label;
+				//declarationList << "\t" << $1.traducao << " " << $2.label << ";\n";
+				$$.traducao = $3.traducao + "\t"+$1.tipo +" "+ $1.label + " = " + $3.label +";\n";
+				
+			}
+			
+			|	TK_TIPO TK_ID
 			{
 				//std::string label = gen_label();
 				$$.label = $2.label;
 				declarationList << "\t" << $1.traducao << " " << $2.label << ";\n";
 				$$.traducao = "\t" + $1.traducao + " " + $2.label + ";\n";
+				$$.tipo = $1.traducao;
 				
 			}
-			| TK_TIPO_INT TK_ID '=' E
-				{
-				//std::string label = gen_label();
-				$$.label = $2.label;
-				declarationList << "\t" << $1.traducao << " " << $2.label << ";\n";
-				$$.traducao = $4.traducao + "\t" + $2.label + " = " + $4.label +";\n";
-				
-				}
+			 
 			;
 
 %%
