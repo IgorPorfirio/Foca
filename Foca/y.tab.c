@@ -87,11 +87,12 @@ struct atributos
 {
 	string label;
 	string traducao;
-	bool declared = false;
+	
 };
 string printDeclaracoes();
 int yylex(void);
 void yyerror(string);
+
 std::string gen_label()
 {
 	std::stringstream label;
@@ -99,7 +100,8 @@ std::string gen_label()
     return label.str();
 }
 
-#line 103 "y.tab.c"
+
+#line 105 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -596,10 +598,10 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int8 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,    53,    53,    65,    71,    72,    75,    77,    83,    91,
-     100,   107,   116,   124
+       0,    55,    55,    66,    72,    76,    79,    84,    91,    99,
+     107,   114,   125,   133
 };
 #endif
 
@@ -1170,106 +1172,124 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* S: TK_TIPO_INT TK_MAIN '(' ')' BLOCO  */
-#line 54 "sintatica.y"
+#line 56 "sintatica.y"
                         {
 				cout << "\n/*Compilador FOCA*/\n\n";
 				cout << "#include <iostream>\n#iCompilador>\n#include<stdio.h>\n\n";
 				cout << "int main(void)\n{\n";
 				cout << printDeclaracoes() <<"\n"; // Printa declarações de variaveis
-				//cout << declarationList <<"\n";
-    			cout << yyvsp[0].traducao << "\n"; // Print a tradução do código
-    			cout << "\treturn 0;\n}" << endl;
+	 			cout << yyvsp[0].traducao << "\n"; // Print a tradução do código
+				cout << "\treturn 0;\n}" << endl;
 			}
-#line 1184 "y.tab.c"
+#line 1185 "y.tab.c"
     break;
 
   case 3: /* BLOCO: '{' COMANDOS '}'  */
-#line 66 "sintatica.y"
+#line 67 "sintatica.y"
                         {
 				yyval.traducao = yyvsp[-1].traducao;
 			}
-#line 1192 "y.tab.c"
+#line 1193 "y.tab.c"
     break;
 
-  case 7: /* COMANDO: DECLARACAO ';'  */
-#line 78 "sintatica.y"
+  case 4: /* COMANDOS: COMANDO COMANDOS  */
+#line 73 "sintatica.y"
                         {
 				yyval.traducao = yyvsp[-1].traducao + yyvsp[0].traducao;
 			}
-#line 1200 "y.tab.c"
+#line 1201 "y.tab.c"
+    break;
+
+  case 6: /* COMANDO: E ';'  */
+#line 80 "sintatica.y"
+                        {
+				yyval.label = yyvsp[-1].label;
+				yyval.traducao = yyvsp[-1].traducao;
+			}
+#line 1210 "y.tab.c"
+    break;
+
+  case 7: /* COMANDO: DECLARACAO ';'  */
+#line 85 "sintatica.y"
+                        {
+				yyval.label = yyvsp[-1].label;
+				yyval.traducao = yyvsp[-1].traducao;
+			}
+#line 1219 "y.tab.c"
     break;
 
   case 8: /* E: E TK_OP E  */
-#line 84 "sintatica.y"
+#line 92 "sintatica.y"
                         {
 				std::string label = gen_label();
 				yyval.label = label;
 				yyval.traducao = yyvsp[-2].traducao + yyvsp[0].traducao + "\t" + label + " = " + yyvsp[-2].label +" "+ yyvsp[-1].label +" "+ yyvsp[0].label + ";\n";
 				
 			}
-#line 1211 "y.tab.c"
+#line 1230 "y.tab.c"
     break;
 
   case 9: /* E: TK_ID '=' E  */
-#line 92 "sintatica.y"
+#line 100 "sintatica.y"
                         {
-				//std::string label = gen_label();
-				yyval.traducao = yyvsp[0].traducao + "\t" + yyvsp[-2].label + " = " + yyvsp[0].label + ";\n";
-        		yyval.label = yyvsp[-2].label; // Assign the label of the expression to the variable
+				yyval.label = yyvsp[-2].label; // Label da expressão = Label/nome da variavel
+				yyval.traducao = yyvsp[0].traducao + "\t" + yyvsp[-2].label + " = " + yyvsp[0].label + ";\n"; //mantem tradução da expressão + Nome da variavel = Variavel temporaria da expressão 
 				
 				
 			}
-#line 1223 "y.tab.c"
+#line 1241 "y.tab.c"
     break;
 
   case 10: /* E: TK_NUM  */
-#line 101 "sintatica.y"
+#line 108 "sintatica.y"
                         {
 				std::string label = gen_label();
-				yyval.label = label;
-				yyval.traducao = "\t" + label + " = " + yyvsp[0].traducao + ";\n";
+				yyval.label = label; //temp n
+				yyval.traducao = "\t" + label + " = " + yyvsp[0].traducao + ";\n"; //tem n = valor do numero
 			}
-#line 1233 "y.tab.c"
+#line 1251 "y.tab.c"
     break;
 
   case 11: /* E: TK_ID  */
-#line 108 "sintatica.y"
-                        {
-				
+#line 115 "sintatica.y"
+                        {			
+				//if(declarationList.str().find($1.label)!= std::string::npos)
 				std::string label = gen_label();
-				yyval.label = label;
-				//declarationList << "\tint" << label << ";";
-				yyval.traducao = "\t" + label + " = " + yyvsp[0].label + ";\n"; 
+				yyval.label = label; //temp n
+				yyval.traducao = "\t" + label + " = " + yyvsp[0].label + ";\n"; //temp n = "nome da variavel"
+				
+					
+					
 			}
-#line 1245 "y.tab.c"
+#line 1265 "y.tab.c"
     break;
 
   case 12: /* DECLARACAO: TK_TIPO_INT TK_ID  */
-#line 117 "sintatica.y"
+#line 126 "sintatica.y"
                         {
-				std::string label = gen_label();
-				yyval.label = label;
+				//std::string label = gen_label();
+				yyval.label = yyvsp[0].label;
 				declarationList << "\t" << yyvsp[-1].traducao << " " << yyvsp[0].label << ";\n";
 				yyval.traducao = "\t" + yyvsp[-1].traducao + " " + yyvsp[0].label + ";\n";
-				yyval.declared = true;
+				
 			}
-#line 1257 "y.tab.c"
+#line 1277 "y.tab.c"
     break;
 
   case 13: /* DECLARACAO: TK_TIPO_INT TK_ID '=' E  */
-#line 125 "sintatica.y"
+#line 134 "sintatica.y"
                                 {
-				std::string label = gen_label();
-				yyval.label = label;
+				//std::string label = gen_label();
+				yyval.label = yyvsp[-2].label;
 				declarationList << "\t" << yyvsp[-3].traducao << " " << yyvsp[-2].label << ";\n";
-				yyval.traducao = "\t" + yyvsp[-3].traducao + " " + yyvsp[-2].label + " = " + yyvsp[0].traducao +";\n";
-				yyval.declared = true;
+				yyval.traducao = yyvsp[0].traducao + "\t" + yyvsp[-2].label + " = " + yyvsp[0].label +";\n";
+				
 				}
-#line 1269 "y.tab.c"
+#line 1289 "y.tab.c"
     break;
 
 
-#line 1273 "y.tab.c"
+#line 1293 "y.tab.c"
 
       default: break;
     }
@@ -1462,7 +1482,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 134 "sintatica.y"
+#line 143 "sintatica.y"
 
 
 #include "lex.yy.c"
@@ -1472,13 +1492,14 @@ int yyparse();
 string printDeclaracoes()
 {
 	stringstream declaracoes; 
-	int i = 0;
-	for( i; i < label_i; i++){
-		declaracoes << "\tint temp" << i <<";\n";
-	 	}
-	declaracoes << declarationList.str();
 	
-	//declaracoes << "\n";
+	for(int i = 0; i < label_i; i++)
+	{
+		declaracoes << "\tint temp" << i <<";\n";
+	}
+	declaracoes << declarationList.str() << "\n";
+	
+	
 
 	return declaracoes.str();
 }

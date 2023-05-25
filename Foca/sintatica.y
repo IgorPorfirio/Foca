@@ -17,17 +17,19 @@ struct atributos
 {
 	string label;
 	string traducao;
-	bool declared = false;
+	
 };
 string printDeclaracoes();
 int yylex(void);
 void yyerror(string);
+
 std::string gen_label()
 {
 	std::stringstream label;
     label << "temp" << label_i++;
     return label.str();
 }
+
 %}
 
 %token TK_NUM
@@ -56,9 +58,8 @@ S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 				cout << "#include <iostream>\n#iCompilador>\n#include<stdio.h>\n\n";
 				cout << "int main(void)\n{\n";
 				cout << printDeclaracoes() <<"\n"; // Printa declarações de variaveis
-				//cout << declarationList <<"\n";
-    			cout << $5.traducao << "\n"; // Print a tradução do código
-    			cout << "\treturn 0;\n}" << endl;
+	 			cout << $5.traducao << "\n"; // Print a tradução do código
+				cout << "\treturn 0;\n}" << endl;
 			}
 			;
 
@@ -69,18 +70,25 @@ BLOCO		: '{' COMANDOS '}'
 			;
 
 COMANDOS	: COMANDO COMANDOS
+			{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
 			|
 			;
 
 COMANDO 	: E ';'
-			
+			{
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
+			}
 			| DECLARACAO ';'
 			{
-				$$.traducao = $1.traducao + $2.traducao;
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
 			}
 			; 
 
-E 			: E TK_OP E //operaçẽs básicas
+E 			: E TK_OP E //operaçẽs básicas 
 			{
 				std::string label = gen_label();
 				$$.label = label;
@@ -90,9 +98,8 @@ E 			: E TK_OP E //operaçẽs básicas
 			
 			| TK_ID '=' E //atribuição
 			{
-				//std::string label = gen_label();
-				$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
-        		$$.label = $1.label; // Assign the label of the expression to the variable
+				$$.label = $1.label; // Label da expressão = Label/nome da variavel
+				$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n"; //mantem tradução da expressão + Nome da variavel = Variavel temporaria da expressão 
 				
 				
 			}
@@ -100,34 +107,36 @@ E 			: E TK_OP E //operaçẽs básicas
 			| TK_NUM
 			{
 				std::string label = gen_label();
-				$$.label = label;
-				$$.traducao = "\t" + label + " = " + $1.traducao + ";\n";
+				$$.label = label; //temp n
+				$$.traducao = "\t" + label + " = " + $1.traducao + ";\n"; //tem n = valor do numero
 			}
 			
 			| TK_ID
-			{
-				
+			{			
+				//if(declarationList.str().find($1.label)!= std::string::npos)
 				std::string label = gen_label();
-				$$.label = label;
-				//declarationList << "\tint" << label << ";";
-				$$.traducao = "\t" + label + " = " + $1.label + ";\n"; 
+				$$.label = label; //temp n
+				$$.traducao = "\t" + label + " = " + $1.label + ";\n"; //temp n = "nome da variavel"
+				
+					
+					
 			}
 			
 DECLARACAO	: TK_TIPO_INT TK_ID
 			{
-				std::string label = gen_label();
-				$$.label = label;
+				//std::string label = gen_label();
+				$$.label = $2.label;
 				declarationList << "\t" << $1.traducao << " " << $2.label << ";\n";
 				$$.traducao = "\t" + $1.traducao + " " + $2.label + ";\n";
-				$$.declared = true;
+				
 			}
 			| TK_TIPO_INT TK_ID '=' E
 				{
-				std::string label = gen_label();
-				$$.label = label;
+				//std::string label = gen_label();
+				$$.label = $2.label;
 				declarationList << "\t" << $1.traducao << " " << $2.label << ";\n";
-				$$.traducao = "\t" + $1.traducao + " " + $2.label + " = " + $4.traducao +";\n";
-				$$.declared = true;
+				$$.traducao = $4.traducao + "\t" + $2.label + " = " + $4.label +";\n";
+				
 				}
 			;
 
@@ -140,13 +149,14 @@ int yyparse();
 string printDeclaracoes()
 {
 	stringstream declaracoes; 
-	int i = 0;
-	for( i; i < label_i; i++){
-		declaracoes << "\tint temp" << i <<";\n";
-	 	}
-	declaracoes << declarationList.str();
 	
-	//declaracoes << "\n";
+	for(int i = 0; i < label_i; i++)
+	{
+		declaracoes << "\tint temp" << i <<";\n";
+	}
+	declaracoes << declarationList.str() << "\n";
+	
+	
 
 	return declaracoes.str();
 }
