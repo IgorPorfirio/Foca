@@ -28,8 +28,8 @@ ID {LETRA}({LETRA}|{NUM})*
 
 
 {OPERADOR}		{ yylval.label = yytext; return TK_OP; }
-{NUM}		{ yylval.traducao = yytext; return TK_NUM; }
-{REAL}      { yylval.traducao = yytext; return TK_REAL; }
+{NUM}		{ yylval.tipo = "int"; yylval.traducao = yytext; return TK_NUM; }
+{REAL}      { yylval.tipo = "float"; yylval.traducao = yytext; return TK_REAL; }
 {ID}		{ yylval.label = yytext; return TK_ID; }
 .			{ *yytext; }
 

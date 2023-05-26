@@ -783,12 +783,12 @@ YY_RULE_SETUP
 case 9:
 YY_RULE_SETUP
 #line 31 "lexica.l"
-{ yylval.traducao = yytext; return TK_NUM; }
+{ yylval.tipo = "int"; yylval.traducao = yytext; return TK_NUM; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 32 "lexica.l"
-{ yylval.traducao = yytext; return TK_REAL; }
+{ yylval.tipo = "float"; yylval.traducao = yytext; return TK_REAL; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP

@@ -1,7 +1,5 @@
 int main()
 {
-	int A = 2*2;
-	float C = 1.0;
-	int B = 3;
-	B = 2*A;
+	float  A;
+	A = (float)1 + 1.0;
 }
