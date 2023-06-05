@@ -31,15 +31,7 @@ struct atributos
 	string tipo;
 };
 
-std::string getDominantType(const std::string& tipo1, const std::string& tipo2) {
-    if (tipo1 == "float" || tipo2 == "float") {
-        return "float";
-    } else {
-        return "int";
-    }
-}
-
-
+std::string getDominantType(const std::string& tipo1, const std::string& tipo2);
 string printDeclaracoes();
 int yylex(void);
 void yyerror(string);
@@ -55,7 +47,7 @@ atributos implicitTypeCast(const atributos& original, const atributos& destino);
 %token TK_MAIN
 %token TK_ID 
 %token TK_FIM TK_ERROR
-%token TK_OP
+%token TK_OP TK_OP2
 %token TK_RELACIONAL
 %token TK_LOGICO
 %token TK_UNARIO
@@ -65,8 +57,8 @@ atributos implicitTypeCast(const atributos& original, const atributos& destino);
 
 
 
-%left '+' '-' 
-%left '*' '/' 
+%left TK_OP 
+%left TK_OP2
 
 //%left TK_RELACIONAL TK_LOGICO
 //%left TK_UNARIO
@@ -101,7 +93,9 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $1.traducao + $2.traducao;
 			}
-			|
+			| {
+				$$.traducao = "";
+			}
 			;
 
 COMANDO 	: E ';'
@@ -112,9 +106,31 @@ COMANDO 	: E ';'
 			}
 			; 
 
-E 			: E TK_OP E //operaçẽs básicas 
+E 			: E TK_OP E 
 			{	
-				
+				if($1.tipo == "bool" || $3.tipo == "bool")
+					yyerror("Operação entre não booleanos não é possível");
+				std::string label = gen_label();
+				addVariable(label, label, $1.tipo);
+				$$.label = label;
+				$$.tipo = getDominantType($1.tipo, $3.tipo);
+				$$.traducao = $1.traducao + $3.traducao;
+				if ($1.tipo != $$.tipo) {
+					atributos typecast = implicitTypeCast($1, $$);
+					$$.traducao += typecast.traducao;
+					$1.label = typecast.label;
+				}
+				if ($3.tipo != $$.tipo) {
+					atributos typecast = implicitTypeCast($3, $$);
+					$$.traducao += typecast.traducao;
+					$3.label = typecast.label;
+				}
+				$$.traducao += "\t" + $$.label + " = " + $1.label + " " + $2.label + " " + $3.label + ";\n";
+			}
+			| E TK_OP2 E 
+			{	
+				if($1.tipo == "bool" || $3.tipo == "bool")
+					yyerror("Operação entre não booleanos não é possível");
 				std::string label = gen_label();
 				addVariable(label, label, $1.tipo);
 				$$.label = label;
@@ -151,6 +167,7 @@ E 			: E TK_OP E //operaçẽs básicas
 					$$.traducao += typecast.traducao;
 					$3.label = typecast.label;
 				}
+				$$.tipo = "bool";
 				$$.traducao += "\t" + $$.label + " = " + $1.label + " " + $2.label + " " + $3.label + ";\n";
 			}
 			| E TK_LOGICO E
@@ -160,6 +177,7 @@ E 			: E TK_OP E //operaçẽs básicas
 				std::string label = gen_label();
 				addVariable(label, label, $1.tipo);
 				$$.label = label;
+				$$.tipo = "bool";
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.label + " = " + $1.label + " " + $2.label + " " + $3.label + ";\n";
 			}
 
@@ -168,8 +186,25 @@ E 			: E TK_OP E //operaçẽs básicas
 			{
 				if (variableTable.find($1.label) == variableTable.end()) 
    					 yyerror("\n" + $1.label + " não foi declarada");
-				if($1.tipo != $3.tipo)
-					yyerror("tipos diferentes," + $1.label + " é " + $1.tipo + " e " + $3.label + " é " +$3.tipo);
+				
+				if($1.tipo == "bool" && $3.tipo != "bool")
+					 yyerror("booleano não pode receber não booleano");
+				$$.tipo = getDominantType($1.tipo, $3.tipo);
+				if($1.tipo != $$.tipo)
+				{
+					atributos typecast = implicitTypeCast($1, $$);
+					$$.traducao += typecast.traducao;
+					//
+					variableTable[$1.label] = std::make_pair(typecast.label, typecast.tipo);
+					//cout << variableTable[$1.label].first;
+					$1.label = typecast.label;
+					
+				}
+				if ($3.tipo != $$.tipo) {
+					atributos typecast = implicitTypeCast($3, $$);
+					$$.traducao += typecast.traducao;
+					$3.label = typecast.label;
+				}
 				$$.label = $1.label; // Label da expressão = Label/nome da variavel
 
 				auto id = variableTable.find($1.label);
@@ -179,7 +214,7 @@ E 			: E TK_OP E //operaçẽs básicas
 				 				
 			}
 			
-			|	'('TK_TIPO')' E %prec TK_UNARIO
+			|	'('TK_TIPO')' E //%prec TK_UNARIO
 			{
 				$$.label =  gen_label();
 				addVariable($$.label, $$.label, $2.tipo);
@@ -251,8 +286,7 @@ E 			: E TK_OP E //operaçẽs básicas
 			
 			|	TK_TIPO TK_ID
 			{
-				
-				
+						
 				$$.label = gen_label();
 				addVariable($2.label, $$.label, $1.tipo);
 				$$.traducao = "";
@@ -277,6 +311,13 @@ std::string gen_label()
     return label.str();
 }
 
+std::string getDominantType(const std::string& tipo1, const std::string& tipo2) {
+    if (tipo1 == "float" || tipo2 == "float") {
+        return "float";
+    } else {
+        return "int";
+    }
+}
 
 atributos implicitTypeCast(const atributos& original, const atributos& destino) {
     atributos result;
@@ -311,7 +352,7 @@ string printDeclaracoes()
 		{
 			const auto& entry = reverseTable.find(variable)->second;
             string variableType = entry.second;
-			if(variableType == "bool" || variableType == "char")
+			if(variableType == "bool")
 				variableType = "int";
             const string& variableName = entry.first;
             declaracoes << "\t" << variableType << " " << variable << ";\t\t\t\t// variavel " << variableName << "\n";
