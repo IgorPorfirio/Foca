@@ -56,12 +56,17 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     TK_NUM = 258,                  /* TK_NUM  */
     TK_REAL = 259,                 /* TK_REAL  */
-    TK_TIPO = 260,                 /* TK_TIPO  */
-    TK_MAIN = 261,                 /* TK_MAIN  */
-    TK_ID = 262,                   /* TK_ID  */
-    TK_FIM = 263,                  /* TK_FIM  */
-    TK_ERROR = 264,                /* TK_ERROR  */
-    TK_OP = 265                    /* TK_OP  */
+    TK_BOOL = 260,                 /* TK_BOOL  */
+    TK_CHAR = 261,                 /* TK_CHAR  */
+    TK_TIPO = 262,                 /* TK_TIPO  */
+    TK_MAIN = 263,                 /* TK_MAIN  */
+    TK_ID = 264,                   /* TK_ID  */
+    TK_FIM = 265,                  /* TK_FIM  */
+    TK_ERROR = 266,                /* TK_ERROR  */
+    TK_OP = 267,                   /* TK_OP  */
+    TK_RELACIONAL = 268,           /* TK_RELACIONAL  */
+    TK_LOGICO = 269,               /* TK_LOGICO  */
+    TK_UNARIO = 270                /* TK_UNARIO  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -72,12 +77,17 @@ extern int yydebug;
 #define YYUNDEF 257
 #define TK_NUM 258
 #define TK_REAL 259
-#define TK_TIPO 260
-#define TK_MAIN 261
-#define TK_ID 262
-#define TK_FIM 263
-#define TK_ERROR 264
-#define TK_OP 265
+#define TK_BOOL 260
+#define TK_CHAR 261
+#define TK_TIPO 262
+#define TK_MAIN 263
+#define TK_ID 264
+#define TK_FIM 265
+#define TK_ERROR 266
+#define TK_OP 267
+#define TK_RELACIONAL 268
+#define TK_LOGICO 269
+#define TK_UNARIO 270
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

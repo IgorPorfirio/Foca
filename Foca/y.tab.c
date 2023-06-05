@@ -72,14 +72,25 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-
+#include <map>
 int label_i = 0;
 
 
 
 #define YYSTYPE atributos
 
-std::stringstream declarationList;
+
+std::map<std::string, std::pair<std::string, std::string>> variableTable; //Nome da variavel, nome temporario e tipo da variavel.
+std::map<std::string, std::pair<std::string, std::string>> reverseTable;  //nome temporario, nome da variavel e tipo da variavel
+
+void addVariable(const std::string& nomeVar, const std::string& nomeTemp, const std::string& type) {
+    variableTable[nomeVar] = std::make_pair(nomeTemp, type);
+	reverseTable[nomeTemp] = std::make_pair(nomeVar, type);
+}
+
+std::pair<std::string, std::string> getVariableInfo(const std::string& codeName) {
+    return variableTable[codeName];
+}
 
 using namespace std;
 
@@ -89,14 +100,26 @@ struct atributos
 	string traducao;
 	string tipo;
 };
+
+std::string getDominantType(const std::string& tipo1, const std::string& tipo2) {
+    if (tipo1 == "float" || tipo2 == "float") {
+        return "float";
+    } else {
+        return "int";
+    }
+}
+
+
 string printDeclaracoes();
 int yylex(void);
 void yyerror(string);
 
 std::string gen_label();
 
+atributos implicitTypeCast(const atributos& original, const atributos& destino); 
 
-#line 100 "y.tab.c"
+
+#line 123 "y.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -142,12 +165,17 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     TK_NUM = 258,                  /* TK_NUM  */
     TK_REAL = 259,                 /* TK_REAL  */
-    TK_TIPO = 260,                 /* TK_TIPO  */
-    TK_MAIN = 261,                 /* TK_MAIN  */
-    TK_ID = 262,                   /* TK_ID  */
-    TK_FIM = 263,                  /* TK_FIM  */
-    TK_ERROR = 264,                /* TK_ERROR  */
-    TK_OP = 265                    /* TK_OP  */
+    TK_BOOL = 260,                 /* TK_BOOL  */
+    TK_CHAR = 261,                 /* TK_CHAR  */
+    TK_TIPO = 262,                 /* TK_TIPO  */
+    TK_MAIN = 263,                 /* TK_MAIN  */
+    TK_ID = 264,                   /* TK_ID  */
+    TK_FIM = 265,                  /* TK_FIM  */
+    TK_ERROR = 266,                /* TK_ERROR  */
+    TK_OP = 267,                   /* TK_OP  */
+    TK_RELACIONAL = 268,           /* TK_RELACIONAL  */
+    TK_LOGICO = 269,               /* TK_LOGICO  */
+    TK_UNARIO = 270                /* TK_UNARIO  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -158,12 +186,17 @@ extern int yydebug;
 #define YYUNDEF 257
 #define TK_NUM 258
 #define TK_REAL 259
-#define TK_TIPO 260
-#define TK_MAIN 261
-#define TK_ID 262
-#define TK_FIM 263
-#define TK_ERROR 264
-#define TK_OP 265
+#define TK_BOOL 260
+#define TK_CHAR 261
+#define TK_TIPO 262
+#define TK_MAIN 263
+#define TK_ID 264
+#define TK_FIM 265
+#define TK_ERROR 266
+#define TK_OP 267
+#define TK_RELACIONAL 268
+#define TK_LOGICO 269
+#define TK_UNARIO 270
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -189,29 +222,32 @@ enum yysymbol_kind_t
   YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
   YYSYMBOL_TK_NUM = 3,                     /* TK_NUM  */
   YYSYMBOL_TK_REAL = 4,                    /* TK_REAL  */
-  YYSYMBOL_TK_TIPO = 5,                    /* TK_TIPO  */
-  YYSYMBOL_TK_MAIN = 6,                    /* TK_MAIN  */
-  YYSYMBOL_TK_ID = 7,                      /* TK_ID  */
-  YYSYMBOL_TK_FIM = 8,                     /* TK_FIM  */
-  YYSYMBOL_TK_ERROR = 9,                   /* TK_ERROR  */
-  YYSYMBOL_TK_OP = 10,                     /* TK_OP  */
-  YYSYMBOL_11_ = 11,                       /* '+'  */
-  YYSYMBOL_12_ = 12,                       /* '-'  */
-  YYSYMBOL_13_ = 13,                       /* '*'  */
-  YYSYMBOL_14_ = 14,                       /* '/'  */
-  YYSYMBOL_15_ = 15,                       /* '('  */
-  YYSYMBOL_16_ = 16,                       /* ')'  */
-  YYSYMBOL_17_ = 17,                       /* '{'  */
-  YYSYMBOL_18_ = 18,                       /* '}'  */
-  YYSYMBOL_19_ = 19,                       /* ';'  */
-  YYSYMBOL_20_ = 20,                       /* '='  */
-  YYSYMBOL_YYACCEPT = 21,                  /* $accept  */
-  YYSYMBOL_S = 22,                         /* S  */
-  YYSYMBOL_BLOCO = 23,                     /* BLOCO  */
-  YYSYMBOL_COMANDOS = 24,                  /* COMANDOS  */
-  YYSYMBOL_COMANDO = 25,                   /* COMANDO  */
-  YYSYMBOL_E = 26,                         /* E  */
-  YYSYMBOL_DECLARACAO = 27                 /* DECLARACAO  */
+  YYSYMBOL_TK_BOOL = 5,                    /* TK_BOOL  */
+  YYSYMBOL_TK_CHAR = 6,                    /* TK_CHAR  */
+  YYSYMBOL_TK_TIPO = 7,                    /* TK_TIPO  */
+  YYSYMBOL_TK_MAIN = 8,                    /* TK_MAIN  */
+  YYSYMBOL_TK_ID = 9,                      /* TK_ID  */
+  YYSYMBOL_TK_FIM = 10,                    /* TK_FIM  */
+  YYSYMBOL_TK_ERROR = 11,                  /* TK_ERROR  */
+  YYSYMBOL_TK_OP = 12,                     /* TK_OP  */
+  YYSYMBOL_TK_RELACIONAL = 13,             /* TK_RELACIONAL  */
+  YYSYMBOL_TK_LOGICO = 14,                 /* TK_LOGICO  */
+  YYSYMBOL_TK_UNARIO = 15,                 /* TK_UNARIO  */
+  YYSYMBOL_16_ = 16,                       /* '+'  */
+  YYSYMBOL_17_ = 17,                       /* '-'  */
+  YYSYMBOL_18_ = 18,                       /* '*'  */
+  YYSYMBOL_19_ = 19,                       /* '('  */
+  YYSYMBOL_20_ = 20,                       /* ')'  */
+  YYSYMBOL_21_ = 21,                       /* '{'  */
+  YYSYMBOL_22_ = 22,                       /* '}'  */
+  YYSYMBOL_23_ = 23,                       /* ';'  */
+  YYSYMBOL_24_ = 24,                       /* '='  */
+  YYSYMBOL_YYACCEPT = 25,                  /* $accept  */
+  YYSYMBOL_S = 26,                         /* S  */
+  YYSYMBOL_BLOCO = 27,                     /* BLOCO  */
+  YYSYMBOL_COMANDOS = 28,                  /* COMANDOS  */
+  YYSYMBOL_COMANDO = 29,                   /* COMANDO  */
+  YYSYMBOL_E = 30                          /* E  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -539,19 +575,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   31
+#define YYLAST   33
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  21
+#define YYNTOKENS  25
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  7
+#define YYNNTS  6
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  15
+#define YYNRULES  18
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  32
+#define YYNSTATES  36
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   265
+#define YYMAXUTOK   270
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -569,15 +605,15 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      15,    16,    13,    11,     2,    12,     2,    14,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,    19,
-       2,    20,     2,     2,     2,     2,     2,     2,     2,     2,
+      19,    20,    18,    16,     2,    17,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,    23,
+       2,    24,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    17,     2,    18,     2,     2,     2,     2,
+       2,     2,     2,    21,     2,    22,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -591,15 +627,16 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    51,    51,    67,    73,    77,    80,    85,    92,   120,
-     132,   140,   148,   156,   168,   179
+       0,    78,    78,    94,   100,   104,   107,   115,   136,   156,
+     167,   182,   192,   200,   209,   220,   228,   239,   252
 };
 #endif
 
@@ -616,9 +653,10 @@ static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
 static const char *const yytname[] =
 {
   "\"end of file\"", "error", "\"invalid token\"", "TK_NUM", "TK_REAL",
-  "TK_TIPO", "TK_MAIN", "TK_ID", "TK_FIM", "TK_ERROR", "TK_OP", "'+'",
-  "'-'", "'*'", "'/'", "'('", "')'", "'{'", "'}'", "';'", "'='", "$accept",
-  "S", "BLOCO", "COMANDOS", "COMANDO", "E", "DECLARACAO", YY_NULLPTR
+  "TK_BOOL", "TK_CHAR", "TK_TIPO", "TK_MAIN", "TK_ID", "TK_FIM",
+  "TK_ERROR", "TK_OP", "TK_RELACIONAL", "TK_LOGICO", "TK_UNARIO", "'+'",
+  "'-'", "'*'", "'('", "')'", "'{'", "'}'", "';'", "'='", "$accept", "S",
+  "BLOCO", "COMANDOS", "COMANDO", "E", YY_NULLPTR
 };
 
 static const char *
@@ -628,7 +666,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-13)
+#define YYPACT_NINF (-7)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -642,10 +680,10 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -2,     7,     8,     3,   -13,     4,     5,    -3,   -13,   -13,
-     -13,    14,     6,    18,     9,    -3,     0,    -4,   -13,     2,
-      12,   -13,   -13,     2,   -13,   -13,     2,    15,    21,    15,
-      15,   -13
+       6,     7,     5,     1,    -7,    -6,    -4,    -3,    -7,    -7,
+      -7,    -7,    -7,    12,     2,    15,     8,    -3,    -5,     4,
+      -3,    11,    -7,    -7,    -3,    -3,    -3,    -7,    -3,    -2,
+      -3,    -2,    -2,    -2,    -2,    -2
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -653,22 +691,22 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     1,     0,     0,     5,     2,    11,
-      12,     0,    13,     0,     0,     5,     0,     0,    15,     0,
-       0,     3,     4,     0,     6,     7,     0,     9,     0,     8,
-      14,    10
+       0,     0,     0,     0,     1,     0,     0,     5,     2,    12,
+      13,    14,    15,     0,    16,     0,     0,     5,     0,    18,
+       0,     0,     3,     4,     0,     0,     0,     6,     0,    10,
+       0,     7,     8,     9,    17,    11
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -13,   -13,   -13,    16,   -13,   -12,   -13
+      -7,    -7,    -7,    16,    -7,    -1
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     2,     8,    14,    15,    16,    17
+       0,     2,     8,    16,    17,    18
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -676,42 +714,42 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-       9,    10,    11,     1,    12,     9,    10,    27,     4,    12,
-      23,    29,    13,     3,    30,    25,    26,    13,     5,    24,
-       6,    18,     7,    20,    31,    23,    19,    21,    28,     0,
-       0,    22
+       9,    10,    11,    12,    13,     4,    14,    24,    25,    26,
+      24,    25,    26,     1,     6,     3,    15,     7,    27,    29,
+       5,    19,    21,    31,    32,    33,    20,    34,    28,    35,
+      22,    30,     0,    23
 };
 
 static const yytype_int8 yycheck[] =
 {
-       3,     4,     5,     5,     7,     3,     4,    19,     0,     7,
-      10,    23,    15,     6,    26,    19,    20,    15,    15,    19,
-      16,     7,    17,     5,     3,    10,    20,    18,    16,    -1,
-      -1,    15
+       3,     4,     5,     6,     7,     0,     9,    12,    13,    14,
+      12,    13,    14,     7,    20,     8,    19,    21,    23,    20,
+      19,     9,     7,    24,    25,    26,    24,    28,    24,    30,
+      22,    20,    -1,    17
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     5,    22,     6,     0,    15,    16,    17,    23,     3,
-       4,     5,     7,    15,    24,    25,    26,    27,     7,    20,
-       5,    18,    24,    10,    19,    19,    20,    26,    16,    26,
-      26,     3
+       0,     7,    26,     8,     0,    19,    20,    21,    27,     3,
+       4,     5,     6,     7,     9,    19,    28,    29,    30,     9,
+      24,     7,    22,    28,    12,    13,    14,    23,    24,    30,
+      20,    30,    30,    30,    30,    30
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    21,    22,    23,    24,    24,    25,    25,    26,    26,
-      26,    26,    26,    26,    27,    27
+       0,    25,    26,    27,    28,    28,    29,    30,    30,    30,
+      30,    30,    30,    30,    30,    30,    30,    30,    30
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     5,     3,     2,     0,     2,     2,     3,     3,
-       4,     1,     1,     1,     3,     2
+       0,     2,     5,     3,     2,     0,     2,     3,     3,     3,
+       3,     4,     1,     1,     1,     1,     1,     4,     2
 };
 
 
@@ -1175,7 +1213,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* S: TK_TIPO TK_MAIN '(' ')' BLOCO  */
-#line 52 "sintatica.y"
+#line 79 "sintatica.y"
                         {
 				if(yyvsp[-4].tipo != "int")
 				{
@@ -1189,165 +1227,221 @@ yyreduce:
 	 			cout << yyvsp[0].traducao << "\n"; // Print a tradução do código
 				cout << "\treturn 0;\n}" << endl;
 			}
-#line 1193 "y.tab.c"
+#line 1231 "y.tab.c"
     break;
 
   case 3: /* BLOCO: '{' COMANDOS '}'  */
-#line 68 "sintatica.y"
+#line 95 "sintatica.y"
                         {
 				yyval.traducao = yyvsp[-1].traducao;
 			}
-#line 1201 "y.tab.c"
+#line 1239 "y.tab.c"
     break;
 
   case 4: /* COMANDOS: COMANDO COMANDOS  */
-#line 74 "sintatica.y"
+#line 101 "sintatica.y"
                         {
 				yyval.traducao = yyvsp[-1].traducao + yyvsp[0].traducao;
 			}
-#line 1209 "y.tab.c"
+#line 1247 "y.tab.c"
     break;
 
   case 6: /* COMANDO: E ';'  */
-#line 81 "sintatica.y"
+#line 108 "sintatica.y"
                         {
 				yyval.label = yyvsp[-1].label;
 				yyval.traducao = yyvsp[-1].traducao;
+				yyval.tipo = yyvsp[-1].tipo;
 			}
-#line 1218 "y.tab.c"
+#line 1257 "y.tab.c"
     break;
 
-  case 7: /* COMANDO: DECLARACAO ';'  */
-#line 86 "sintatica.y"
-                        {
-				yyval.label = yyvsp[-1].label;
-				yyval.traducao = yyvsp[-1].traducao;
-			}
-#line 1227 "y.tab.c"
-    break;
-
-  case 8: /* E: E TK_OP E  */
-#line 93 "sintatica.y"
+  case 7: /* E: E TK_OP E  */
+#line 116 "sintatica.y"
                         {	
 				
-				if(yyvsp[-2].tipo != yyvsp[0].tipo)
-				{
-					if(yyvsp[-2].tipo == "float")
-					{
-						
-						std::string label = gen_label();
-						yyvsp[0].tipo = yyvsp[-2].tipo;
-						yyvsp[0].traducao = yyvsp[0].traducao +  "\t" + label + " = " + yyvsp[-2].tipo + " " + yyvsp[0].label + ";\n";
-						yyvsp[0].label = label;
-						
-					}	else
-					{
-						std::string label = gen_label();
-						yyvsp[-2].tipo = yyvsp[0].tipo;
-						yyvsp[-2].traducao = yyvsp[-2].traducao + "\t" + label + " = " + yyvsp[0].tipo + " " + yyvsp[-2].label + ";\n";
-						yyvsp[-2].label = label;
-			
-					}		
+				std::string label = gen_label();
+				addVariable(label, label, yyvsp[-2].tipo);
+				yyval.label = label;
+				yyval.tipo = getDominantType(yyvsp[-2].tipo, yyvsp[0].tipo);
+				yyval.traducao = yyvsp[-2].traducao + yyvsp[0].traducao;
+				if (yyvsp[-2].tipo != yyval.tipo) {
+					atributos typecast = implicitTypeCast(yyvsp[-2], yyval);
+					yyval.traducao += typecast.traducao;
+					yyvsp[-2].label = typecast.label;
 				}
-				yyval.label = gen_label();
-				yyval.traducao = yyvsp[-2].traducao + yyvsp[0].traducao + "\t" + yyval.label + " = " + yyvsp[-2].label +" "+ yyvsp[-1].label +" "+ yyvsp[0].label + ";\n";
-				yyval.tipo = yyvsp[-2].tipo;
-				
+				if (yyvsp[0].tipo != yyval.tipo) {
+					atributos typecast = implicitTypeCast(yyvsp[0], yyval);
+					yyval.traducao += typecast.traducao;
+					yyvsp[0].label = typecast.label;
+				}
+				yyval.traducao += "\t" + yyval.label + " = " + yyvsp[-2].label + " " + yyvsp[-1].label + " " + yyvsp[0].label + ";\n";
 			}
-#line 1258 "y.tab.c"
+#line 1281 "y.tab.c"
     break;
 
-  case 9: /* E: TK_ID '=' E  */
-#line 121 "sintatica.y"
+  case 8: /* E: E TK_RELACIONAL E  */
+#line 137 "sintatica.y"
                         {
-				if(declarationList.str().find(yyvsp[-2].label) == std::string::npos)
-					yyerror("\n" + yyvsp[-2].label +" não foi declarada");
+				
+				std::string label = gen_label();
+				addVariable(label, label, yyvsp[-2].tipo);
+				yyval.label = label;
+				yyval.tipo = getDominantType(yyvsp[-2].tipo, yyvsp[0].tipo);
+				yyval.traducao = yyvsp[-2].traducao + yyvsp[0].traducao;
+				if (yyvsp[-2].tipo != yyval.tipo) {
+					atributos typecast = implicitTypeCast(yyvsp[-2], yyval);
+					yyval.traducao += typecast.traducao;
+					yyvsp[-2].label = typecast.label;
+				}
+				if (yyvsp[0].tipo != yyval.tipo) {
+					atributos typecast = implicitTypeCast(yyvsp[0], yyval);
+					yyval.traducao += typecast.traducao;
+					yyvsp[0].label = typecast.label;
+				}
+				yyval.traducao += "\t" + yyval.label + " = " + yyvsp[-2].label + " " + yyvsp[-1].label + " " + yyvsp[0].label + ";\n";
+			}
+#line 1305 "y.tab.c"
+    break;
+
+  case 9: /* E: E TK_LOGICO E  */
+#line 157 "sintatica.y"
+                        {
+				if(yyvsp[-2].tipo != "bool" || yyvsp[0].tipo != "bool")
+					yyerror("Operação lógica entre não booleanos não é possível");
+				std::string label = gen_label();
+				addVariable(label, label, yyvsp[-2].tipo);
+				yyval.label = label;
+				yyval.traducao = yyvsp[-2].traducao + yyvsp[0].traducao + "\t" + yyval.label + " = " + yyvsp[-2].label + " " + yyvsp[-1].label + " " + yyvsp[0].label + ";\n";
+			}
+#line 1318 "y.tab.c"
+    break;
+
+  case 10: /* E: TK_ID '=' E  */
+#line 168 "sintatica.y"
+                        {
+				if (variableTable.find(yyvsp[-2].label) == variableTable.end()) 
+   					 yyerror("\n" + yyvsp[-2].label + " não foi declarada");
 				if(yyvsp[-2].tipo != yyvsp[0].tipo)
-					yyerror("tipos diferentes");
+					yyerror("tipos diferentes," + yyvsp[-2].label + " é " + yyvsp[-2].tipo + " e " + yyvsp[0].label + " é " +yyvsp[0].tipo);
 				yyval.label = yyvsp[-2].label; // Label da expressão = Label/nome da variavel
-				yyval.traducao = yyvsp[0].traducao + "\t" + yyvsp[-2].label + " = " + yyvsp[0].label + ";\n"; //mantem tradução da expressão + Nome da variavel = Variavel temporaria da expressão 
+
+				auto id = variableTable.find(yyvsp[-2].label);
+				
+				yyval.traducao = yyvsp[0].traducao + "\t" + id->second.first + " = " + yyvsp[0].label + ";\n"; //mantem tradução da expressão + Nome da variavel = Variavel temporaria da expressão 
 				yyval.tipo = yyvsp[-2].tipo;
 				 				
 			}
-#line 1273 "y.tab.c"
+#line 1336 "y.tab.c"
     break;
 
-  case 10: /* E: '(' TK_TIPO ')' TK_NUM  */
-#line 133 "sintatica.y"
+  case 11: /* E: '(' TK_TIPO ')' E  */
+#line 183 "sintatica.y"
                         {
 				yyval.label =  gen_label();
-				yyval.traducao = yyvsp[0].traducao + "\t" + yyval.label + " = " + yyvsp[0].label +";\n";
+				addVariable(yyval.label, yyval.label, yyvsp[-2].tipo);
 				yyval.tipo = yyvsp[-2].traducao;
+				yyval.traducao = yyvsp[0].traducao + "\t" + yyval.label + " = (" +yyvsp[-2].traducao +")" + yyvsp[0].label + ";\n";
+				
 				
 			}
-#line 1284 "y.tab.c"
+#line 1349 "y.tab.c"
     break;
 
-  case 11: /* E: TK_NUM  */
-#line 141 "sintatica.y"
+  case 12: /* E: TK_NUM  */
+#line 193 "sintatica.y"
                         {
-				std::string label = gen_label();
-				yyval.label = label; //temp n
-				yyval.traducao = "\t" + label + " = " + yyvsp[0].traducao + ";\n"; //tem n = valor do numero
+				yyval.label = gen_label();
+				addVariable(yyval.label, yyval.label, yyvsp[0].tipo);
+				yyval.traducao = "\t" + yyval.label + " = " + yyvsp[0].traducao + ";\n"; //tem n = valor do numero
 				yyval.tipo = yyvsp[0].tipo;
 			}
-#line 1295 "y.tab.c"
+#line 1360 "y.tab.c"
     break;
 
-  case 12: /* E: TK_REAL  */
-#line 149 "sintatica.y"
+  case 13: /* E: TK_REAL  */
+#line 201 "sintatica.y"
                         {
-				std::string label = gen_label();
-				yyval.label = label; //temp n
-				yyval.traducao = "\t" + label + " = " + yyvsp[0].traducao + ";\n"; //tem n = valor do numero
+				yyval.label = gen_label();
+				addVariable(yyval.label, yyval.label, yyvsp[0].tipo);
+				
+				yyval.traducao = "\t" + yyval.label + " = " + yyvsp[0].traducao + ";\n"; 
 				yyval.tipo = yyvsp[0].tipo;
 			}
-#line 1306 "y.tab.c"
+#line 1372 "y.tab.c"
     break;
 
-  case 13: /* E: TK_ID  */
-#line 157 "sintatica.y"
+  case 14: /* E: TK_BOOL  */
+#line 210 "sintatica.y"
+                        {
+				yyval.label = gen_label();
+				addVariable(yyval.label, yyval.label, yyvsp[0].tipo);
+				
+				if(yyval.traducao == "TRUE")
+					yyval.traducao = "\t" + yyval.label + " = " + "1" + ";\t\t\t\t//boolean TRUE\n"; 
+				else
+					yyval.traducao = "\t" + yyval.label + " = " + "0" + ";\t\t\t\t//boolean FALSE\n"; 
+				yyval.tipo = yyvsp[0].tipo;
+			}
+#line 1387 "y.tab.c"
+    break;
+
+  case 15: /* E: TK_CHAR  */
+#line 221 "sintatica.y"
+                        {
+				yyval.label = gen_label();
+				addVariable(yyval.label, yyval.label, yyvsp[0].tipo);
+				yyval.traducao = "\t" + yyval.label + " = " + yyvsp[0].traducao + ";\n";
+        		yyval.tipo = "char";
+			}
+#line 1398 "y.tab.c"
+    break;
+
+  case 16: /* E: TK_ID  */
+#line 229 "sintatica.y"
                         {			
-				if(declarationList.str().find(yyvsp[0].label) == std::string::npos)
-					yyerror("\n" + yyvsp[0].label +" não foi declarada");
+				if (variableTable.find(yyvsp[0].label) == variableTable.end()) 
+   					yyerror("\n" + yyvsp[0].label + " não foi declarada");
 				std::string label = gen_label();
 				yyval.label = label; //temp n
-				yyval.traducao = "\t" + label + " = " + yyvsp[0].label + ";\n"; //temp n = "nome da variavel"
-							
+				yyval.traducao = "\t" + label + " = " + yyvsp[0].traducao + ";\n"; 
+				yyval.tipo = variableTable[yyvsp[0].label].second;
 			}
-#line 1319 "y.tab.c"
+#line 1411 "y.tab.c"
     break;
 
-  case 14: /* DECLARACAO: DECLARACAO '=' E  */
-#line 169 "sintatica.y"
+  case 17: /* E: TK_TIPO TK_ID '=' E  */
+#line 240 "sintatica.y"
                         {
 				//std::string label = gen_label();
-				if(yyvsp[-2].tipo != yyvsp[0].tipo)
+				if(yyvsp[-3].tipo != yyvsp[0].tipo)
 					yyerror("tipos incompativeis");
-				yyval.label = yyvsp[-2].label;
-				//declarationList << "\t" << $1.traducao << " " << $2.label << ";\n";
-				yyval.traducao = yyvsp[0].traducao + "\t"+ yyvsp[-2].label + " = " + yyvsp[0].label +";\n";
+				
+				yyval.label = gen_label();
+				addVariable(yyvsp[-2].label, yyval.label, yyvsp[-3].tipo);
+				yyval.traducao = yyvsp[0].traducao + "\t" + yyvsp[-2].label + " = " + yyvsp[0].label + ";\n";
+				yyval.tipo = yyvsp[-3].tipo;
 				
 			}
-#line 1333 "y.tab.c"
+#line 1427 "y.tab.c"
     break;
 
-  case 15: /* DECLARACAO: TK_TIPO TK_ID  */
-#line 180 "sintatica.y"
+  case 18: /* E: TK_TIPO TK_ID  */
+#line 253 "sintatica.y"
                         {
 				
-				//std::string label = gen_label();
-				yyval.label = yyvsp[0].label;
-				declarationList << "\t" << yyvsp[-1].traducao << " " << yyvsp[0].label << ";\n";
-				yyval.traducao = ""; 
-				yyval.tipo = yyvsp[-1].traducao;
+				
+				yyval.label = gen_label();
+				addVariable(yyvsp[0].label, yyval.label, yyvsp[-1].tipo);
+				yyval.traducao = "";
+				yyval.tipo = yyvsp[-1].tipo;
 				
 			}
-#line 1347 "y.tab.c"
+#line 1441 "y.tab.c"
     break;
 
 
-#line 1351 "y.tab.c"
+#line 1445 "y.tab.c"
 
       default: break;
     }
@@ -1540,7 +1634,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 193 "sintatica.y"
+#line 267 "sintatica.y"
 
 
 #include "lex.yy.c"
@@ -1554,15 +1648,49 @@ std::string gen_label()
     return label.str();
 }
 
+
+atributos implicitTypeCast(const atributos& original, const atributos& destino) {
+    atributos result;
+    result.label = gen_label();
+	
+    if (original.tipo != destino.tipo) {
+        
+    	result.traducao = "\t" + result.label + " = " + "(" + destino.tipo + ")" + original.label + ";\n";
+        
+    } else {
+        // No type casting needed, assign the original value
+        result.traducao = "\t" + result.label + " = " + original.label + ";\n";
+    }
+	
+    result.tipo = destino.tipo;
+	addVariable(result.label, result.label, result.tipo);
+    return result;
+}
+
 string printDeclaracoes()
 {
 	stringstream declaracoes; 
 	
 	for(int i = 0; i < label_i; i++)
 	{
-		declaracoes << "\tint temp" << i <<";\n";
+		string variable = "temp" + to_string(i);
+
+		if (reverseTable.find(variable) == reverseTable.end())
+		{
+			declaracoes << "\tint temp" << i <<";\n";
+		}else
+		{
+			const auto& entry = reverseTable.find(variable)->second;
+            string variableType = entry.second;
+			if(variableType == "bool" || variableType == "char")
+				variableType = "int";
+            const string& variableName = entry.first;
+            declaracoes << "\t" << variableType << " " << variable << ";\t\t\t\t// variavel " << variableName << "\n";
+		}
+		
 	}
-	declaracoes << declarationList.str() << "\n";
+	
+	
 	
 	return declaracoes.str();
 }
