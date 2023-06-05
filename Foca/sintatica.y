@@ -151,7 +151,8 @@ E 			: E TK_OP E
 			
 			| E TK_RELACIONAL E
 			{
-				
+				if($1.tipo == "bool" || $3.tipo == "bool")
+					yyerror("Operação entre não booleanos não é possível");
 				std::string label = gen_label();
 				addVariable(label, label, $1.tipo);
 				$$.label = label;
