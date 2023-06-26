@@ -86,12 +86,31 @@ S 			: TK_TIPO TK_MAIN '(' ')' BLOCO
 			}
 			;
 
-BLOCO		: '{' COMANDOS '}'
+BLOCO		: '{' COMANDOS '}' 
 			{
 				$$.traducao = $2.traducao;
 			}
+			| '{' BLOCO '}' 
 
 			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO
+			{
+				std::string labelIf = gen_label();
+				std::string labelElse = gen_label();
+    			std::string labelEnd = gen_label();
+
+				$$.traducao = $3.traducao + "\tif (" + $3.label + ") goto " + labelIf + ";\n"
+                + "\tgoto " + labelElse + ";\n"
+                + labelIf + ":\n"
+                + $5.traducao + "\tgoto " + labelEnd + ";\n"
+                + labelElse + ":\n"
+                + $7.traducao
+                + labelEnd + ":\n";
+			}
+			| TK_IF '(' E ')' BLOCO
+			{
+
+			}
+			
 			;
 
 COMANDOS	: COMANDO COMANDOS
