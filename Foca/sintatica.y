@@ -1,14 +1,20 @@
-%{
+ %{
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <map>
+#include <vector>
+
 int label_i = 0;
 
 
 
 #define YYSTYPE atributos
 
+
+
+std::vector<std::string> loopStartLabels;
+std::vector<std::string> loopEndLabels;
 
 std::map<std::string, std::pair<std::string, std::string>> variableTable; //Nome da variavel, nome temporario e tipo da variavel.
 std::map<std::string, std::pair<std::string, std::string>> reverseTable;  //nome temporario, nome da variavel e tipo da variavel
@@ -31,6 +37,8 @@ struct atributos
 	string tipo;
 };
 
+
+
 std::string getDominantType(const std::string& tipo1, const std::string& tipo2);
 string printDeclaracoes();
 int yylex(void);
@@ -42,7 +50,7 @@ atributos implicitTypeCast(const atributos& original, const atributos& destino);
 
 %}
 
-%token TK_NUM TK_REAL TK_BOOL TK_CHAR
+%token TK_NUM TK_REAL TK_BOOL TK_CHAR TK_STRING
 %token TK_TIPO
 %token TK_MAIN
 %token TK_ID 
@@ -51,7 +59,15 @@ atributos implicitTypeCast(const atributos& original, const atributos& destino);
 %token TK_RELACIONAL
 %token TK_LOGICO
 %token TK_UNARIO
+%token TK_IF
+%token TK_ELSE
+%token TK_WHILE
+%token TK_DO
+%token TK_FOR
+%token TK_BREAK
+%token TK_CONTINUE
 %start S
+
 
 
 
@@ -83,9 +99,106 @@ S 			: TK_TIPO TK_MAIN '(' ')' BLOCO
 			}
 			;
 
-BLOCO		: '{' COMANDOS '}'
+BLOCO		: '{' COMANDOS '}' 
 			{
 				$$.traducao = $2.traducao;
+			}
+			| '{' BLOCO '}' 
+			{
+				$$.traducao = $2.traducao;
+			}
+			
+			| '{' '}'
+			{
+				$$.traducao = "";
+			}
+			| COMANDOS 
+			{
+				$$.traducao = $1.traducao;
+			}
+			| '{' COMANDOS BLOCO '}'
+			{
+				$$.traducao = $2.traducao + $3.traducao;
+			}
+
+			| TK_IF '(' E ')' BLOCO
+			{
+
+				std::string labelIf = gen_label();
+		        std::string labelEnd = gen_label();
+
+
+				$$.traducao = $3.traducao + "\tif (" + $3.label + ") goto " + labelIf + ";\n"
+                       + "\tgoto " + labelEnd + ";\n"
+                       + labelIf + ":\n"
+                       + labelEnd + ":\n";
+			}
+
+			| TK_IF '(' E ')' BLOCO TK_ELSE BLOCO
+			{
+				std::string labelIf = gen_label();
+				std::string labelElse = gen_label();
+    			std::string labelEnd = gen_label();
+
+				$$.traducao = $3.traducao + "\tif (" + $3.label + ") goto " + labelIf + ";\n"
+                + "\tgoto " + labelElse + ";\n"
+                + labelIf + ":\n"
+                + $5.traducao + "\tgoto " + labelEnd + ";\n"
+                + labelElse + ":\n"
+                + $7.traducao
+                + labelEnd + ":\n";
+			}
+			
+			| TK_WHILE '(' E ')' BLOCO
+			{
+				std::string labelWhile = gen_label();
+				std::string labelEnd = gen_label();
+
+				$$.traducao = labelWhile + ":\n" 
+                            + $3.traducao 
+                            + "\tif (" + $3.label + ") goto " + labelEnd + ";\n" // Condição de Saída
+                            + $5.traducao 
+                            + "\tgoto " + labelWhile + ";\n" 
+                            + labelEnd + ":\n"; 
+			}
+
+			| TK_DO BLOCO TK_WHILE '(' E ')' ';'
+			{
+				std::string labelWhile = gen_label();
+				std::string labelEnd = gen_label();
+
+				$$.traducao = labelWhile + ":\n"
+                            + $2.traducao 
+                            + $5.traducao 
+                            + "\tif (" + $5.label + ") goto " + labelWhile + ";\n" // condição de repetição
+                            + labelEnd + ":\n";
+			}
+			
+			| TK_FOR '(' E ';' E ';' E ')' BLOCO
+			{
+				std::string labelFor = gen_label();
+				std::string labelEnd = gen_label();
+
+
+				loopStartLabels.push_back(labelFor);
+			    loopEndLabels.push_back(labelEnd);
+				
+
+				if($3.tipo == "bool")
+					yyerror("Indice não do for não pode ser do tipo booleano");
+				if($5.tipo != "bool")
+					yyerror("Condição do for deve ser do tipo booleano");
+				if($7.tipo == "bool")
+					yyerror("atualização do for não deve ser do tipo booleano");
+
+				$$.traducao = $3.traducao 
+                            + labelFor + ":\n" 
+                            + $5.traducao 
+                            + "\tif (!(" + $5.label + ")) goto " + labelEnd + ";\n" 
+                            + $9.traducao 
+                            + $7.traducao 
+                            + "\tgoto " + labelFor + ";\n" 
+                            + labelEnd + ":\n"; 
 			}
 			;
 
@@ -93,8 +206,9 @@ COMANDOS	: COMANDO COMANDOS
 			{
 				$$.traducao = $1.traducao + $2.traducao;
 			}
-			| {
-				$$.traducao = "";
+			| COMANDO
+			{
+				$$.traducao = $1.traducao;
 			}
 			;
 
@@ -104,6 +218,31 @@ COMANDO 	: E ';'
 				$$.traducao = $1.traducao;
 				$$.tipo = $1.tipo;
 			}
+			
+			| E
+			{
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
+				$$.tipo = $1.tipo;
+			}
+			
+			| TK_BREAK ';'
+			{
+				
+				if (loopEndLabels.empty()) {
+				yyerror("Break precisa estar em um laço");
+				}
+				$$.traducao = "\tgoto " + loopEndLabels.back() + ";\n";
+			}
+			| TK_CONTINUE ';'
+			
+			{
+				if (loopStartLabels.empty()) {
+					yyerror("Continue precisa estar em um laço");
+				}
+				$$.traducao = "\tgoto " + loopStartLabels.back() + ";\n";
+			}
+			
 			; 
 
 E 			: E TK_OP E 
@@ -253,6 +392,7 @@ E 			: E TK_OP E
 					$$.traducao = "\t" + $$.label + " = " + "0" + ";\t\t\t\t//boolean FALSE\n"; 
 				$$.tipo = $1.tipo;
 			}
+			
 			| TK_CHAR
 			{
 				$$.label = gen_label();
@@ -260,7 +400,11 @@ E 			: E TK_OP E
 				$$.traducao = "\t" + $$.label + " = " + $1.traducao + ";\n";
         		$$.tipo = "char";
 			}
-
+			
+			|	TK_STRING
+			{
+				
+			}
 			| TK_ID
 			{			
 				if (variableTable.find($1.label) == variableTable.end()) 
@@ -277,7 +421,9 @@ E 			: E TK_OP E
 				//std::string label = gen_label();
 				if($1.tipo != $4.tipo)
 					yyerror("tipos incompativeis");
-				
+				if (variableTable.find($2.label) != variableTable.end())
+					yyerror("variavel ja foi declarada");
+					
 				$$.label = gen_label();
 				addVariable($2.label, $$.label, $1.tipo);
 				$$.traducao = $4.traducao + "\t" + $2.label + " = " + $4.label + ";\n";
@@ -294,6 +440,7 @@ E 			: E TK_OP E
 				$$.tipo = $1.tipo;
 				
 			}
+
 			
 			
 			

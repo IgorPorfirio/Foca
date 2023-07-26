@@ -58,16 +58,24 @@ extern int yydebug;
     TK_REAL = 259,                 /* TK_REAL  */
     TK_BOOL = 260,                 /* TK_BOOL  */
     TK_CHAR = 261,                 /* TK_CHAR  */
-    TK_TIPO = 262,                 /* TK_TIPO  */
-    TK_MAIN = 263,                 /* TK_MAIN  */
-    TK_ID = 264,                   /* TK_ID  */
-    TK_FIM = 265,                  /* TK_FIM  */
-    TK_ERROR = 266,                /* TK_ERROR  */
-    TK_OP = 267,                   /* TK_OP  */
-    TK_OP2 = 268,                  /* TK_OP2  */
-    TK_RELACIONAL = 269,           /* TK_RELACIONAL  */
-    TK_LOGICO = 270,               /* TK_LOGICO  */
-    TK_UNARIO = 271                /* TK_UNARIO  */
+    TK_STRING = 262,               /* TK_STRING  */
+    TK_TIPO = 263,                 /* TK_TIPO  */
+    TK_MAIN = 264,                 /* TK_MAIN  */
+    TK_ID = 265,                   /* TK_ID  */
+    TK_FIM = 266,                  /* TK_FIM  */
+    TK_ERROR = 267,                /* TK_ERROR  */
+    TK_OP = 268,                   /* TK_OP  */
+    TK_OP2 = 269,                  /* TK_OP2  */
+    TK_RELACIONAL = 270,           /* TK_RELACIONAL  */
+    TK_LOGICO = 271,               /* TK_LOGICO  */
+    TK_UNARIO = 272,               /* TK_UNARIO  */
+    TK_IF = 273,                   /* TK_IF  */
+    TK_ELSE = 274,                 /* TK_ELSE  */
+    TK_WHILE = 275,                /* TK_WHILE  */
+    TK_DO = 276,                   /* TK_DO  */
+    TK_FOR = 277,                  /* TK_FOR  */
+    TK_BREAK = 278,                /* TK_BREAK  */
+    TK_CONTINUE = 279              /* TK_CONTINUE  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -80,16 +88,24 @@ extern int yydebug;
 #define TK_REAL 259
 #define TK_BOOL 260
 #define TK_CHAR 261
-#define TK_TIPO 262
-#define TK_MAIN 263
-#define TK_ID 264
-#define TK_FIM 265
-#define TK_ERROR 266
-#define TK_OP 267
-#define TK_OP2 268
-#define TK_RELACIONAL 269
-#define TK_LOGICO 270
-#define TK_UNARIO 271
+#define TK_STRING 262
+#define TK_TIPO 263
+#define TK_MAIN 264
+#define TK_ID 265
+#define TK_FIM 266
+#define TK_ERROR 267
+#define TK_OP 268
+#define TK_OP2 269
+#define TK_RELACIONAL 270
+#define TK_LOGICO 271
+#define TK_UNARIO 272
+#define TK_IF 273
+#define TK_ELSE 274
+#define TK_WHILE 275
+#define TK_DO 276
+#define TK_FOR 277
+#define TK_BREAK 278
+#define TK_CONTINUE 279
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
